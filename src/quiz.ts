@@ -1,69 +1,83 @@
-let score = 0;
-let currentQuestion = generateQuestion();
-let feedback = "";
+import { question } from "./question";
 
-function randomInteger(integer: number): number {
-  return Math.floor(Math.random() * integer) + 1;
+// Constants for DOM element IDs
+const DOM_IDS = {
+  QUESTION: "question",
+  ANSWER: "answer",
+  SCORE: "score",
+  FEEDBACK: "feedback",
+  CHECK_ANSWER: "check_answer"
+} as const;
+
+// Types
+interface QuestionResult {
+  num1: number;
+  num2: number;
+  activeOperator: string;
+  answer: number;
 }
 
-function generateQuestion() {
-  const operators = ["×", "÷"];
-  const operator = operators[Math.floor(Math.random() * operators.length)];
-  let num1, num2;
-
-  if (operator === "×") {
-    num1 = randomInteger(10);
-    num2 = randomInteger(10);
-  } else {
-    num2 = randomInteger(10);
-    num1 = num2 * randomInteger(10);
-  }
-
-  return { num1, num2, operator };
+interface QuizState {
+  score: number;
+  currentQuestion: QuestionResult;
+  feedback: string;
 }
 
-export function displayQuestion() {
-  const questionElement = document.getElementById("question");
-  if (questionElement) {
-    questionElement.textContent = `${currentQuestion.num1} ${currentQuestion.operator} ${currentQuestion.num2} = ?`;
+// Initial state
+const state: QuizState = {
+  score: 0,
+  currentQuestion: question.generateRandomQuestion(),
+  feedback: ""
+};
+
+// Helper functions
+const getElement = <T extends HTMLElement>(id: string): T | null => {
+  const element = document.getElementById(id);
+  if (!element) {
+    console.warn(`Element with id "${id}" not found`);
+    return null;
   }
+  return element as T;
+};
+
+const updateElementText = (id: string, text: string): void => {
+  const element = getElement<HTMLElement>(id);
+  if (element) {
+    element.textContent = text;
+  }
+};
+
+export function displayQuestion(): void {
+  const { num1, num2, activeOperator } = state.currentQuestion;
+  updateElementText(DOM_IDS.QUESTION, `${num1} ${activeOperator} ${num2} = ?`);
 }
 
-export function checkAnswer() {
-  const answer = document.getElementById("answer") as HTMLInputElement;
-  const userAnswer = parseFloat(answer.value);
-  const scoreField = document.getElementById("score");
-  let correctAnswer;
+export function checkAnswer(): void {
+  const responseInput = getElement<HTMLInputElement>(DOM_IDS.ANSWER);
+  if (!responseInput) return;
 
-  if (currentQuestion.operator === "×") {
-    correctAnswer = currentQuestion.num1 * currentQuestion.num2;
-  } else {
-    correctAnswer = currentQuestion.num1 / currentQuestion.num2;
+  const userAnswer = parseInt(responseInput.value);
+  const { answer } = state.currentQuestion;
+
+  state.feedback = userAnswer === answer
+    ? "Correct!"
+    : `Incorrect. The correct answer is ${answer}.`;
+
+  if (userAnswer === answer) {
+    state.score++;
   }
 
-  const feedbackElement = document.getElementById("feedback");
+  updateElementText(DOM_IDS.FEEDBACK, state.feedback);
+  updateElementText(DOM_IDS.SCORE, `Score: ${state.score}`);
 
-  if (userAnswer === correctAnswer) {
-    feedback = "Correct!";
-    score++;
-  } else {
-    feedback = `Incorrect. The correct answer is ${correctAnswer}.`;
-  }
-  if (feedbackElement) {
-    feedbackElement.textContent = feedback;
-  }
-  if (scoreField) {
-    scoreField.textContent = `Score: ${score}`;
-  }
-  currentQuestion = generateQuestion();
+  state.currentQuestion = question.generateRandomQuestion();
   displayQuestion();
-  answer.value = "";
+  responseInput.value = "";
 }
 
-export function setupQuiz() {
-  if (document.getElementById("check_answer")) {
-    document
-      .getElementById("check_answer")
-      ?.addEventListener("click", checkAnswer);
+export function setupQuiz(): void {
+  const checkAnswerButton = getElement<HTMLButtonElement>(DOM_IDS.CHECK_ANSWER);
+  if (checkAnswerButton) {
+    checkAnswerButton.addEventListener("click", checkAnswer);
   }
 }
