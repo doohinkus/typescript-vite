@@ -21,17 +21,18 @@ class Question {
   generateRandomQuestion(): QuestionResult {
     const operators = new Operators();
     const activeOperator = operators.getRandomOperator();
-
-    const num1 = this.generateRandomInteger(20);
-    const num2 = this.generateRandomInteger(10);
+    let num1 = this.generateRandomInteger(20);
+    const num2 = this.generateRandomInteger(num1);
 
     let answer: number;
+
     switch (activeOperator) {
       case operatorArray[0]: {
         answer = num1 * num2;
         break;
       }
       case operatorArray[1]: {
+        num1 = num1 * num2;
         answer = num1 / num2;
         break;
       }
