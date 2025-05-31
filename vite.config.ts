@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  base: '/vanilla-math/', // Replace with your repository name
+  base: '/', // Changed to root path for custom domain
   build: {
     outDir: 'dist',
     sourcemap: true
